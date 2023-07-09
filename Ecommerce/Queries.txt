@@ -1,0 +1,145 @@
+1. List the inventory id details which contains the product which is most bought by customer with id 2
+
+create index onq1 
+on Cart(pdid);
+
+select * 
+from InInventory 
+where pdid in (
+   select pdid
+   from Cart
+   where pdid in (
+      select max(quantity)
+      from Cart
+      where ordid in (
+         select ordid 
+         from Corders
+         where uid = 2
+      )
+   )
+);
+
+
+2. Find all products that were purchased atleast twice in the year 2019.
+
+create index onq2
+on Cart(pdid)
+
+Select Cart.pdid 
+from Cart,Corders 
+where Cart.ordid in (
+   select cordid 
+   from Corders 
+   where Year(Corders.dateoforderplaced) = 2019
+   )
+Group by Cart.pdid
+having (Count(*) > 1);
+
+
+
+3.Find all the delivery person who have delivered more than 1 orders
+
+create index onq3
+on DeliveryPerson(deid);
+
+Select deid from DeliveryPerson 
+group by deid
+having count(*)>2;
+
+4.Increment the salary of all the employees by 10 percent who have been working in the store for more than 10 years.
+
+create index onq4
+on Employee(experience);
+
+update Employee
+set salary=salary+0.1*salary
+where experience>=10;
+
+
+5. Find the total sales in each category.
+
+create index onq5
+on Products(pdid);
+
+select Products.catid, sum(Cart.quantity)
+from Products, Cart 
+where Products.pdid = Cart.pdid
+group by Products.catid;
+
+
+6.Find the name of the customers who have ordered any cloth of color blue.
+
+create index onq6
+on Clothes(pdid, color);
+
+select fname, lname from Customer
+where uid in ( 
+   select uid 
+   from Corders
+	where cordid in (
+      select cordid 
+      from Cart
+		where pdid in (
+         select Products.pdid 
+         from Products, Clothes
+         where Clothes.pdid = Products.pdid and Clothes.color = 'blue'
+                  )
+            )
+      );
+
+7.Find the name and phone number of the customers who have ever chosen the payment method as Cash on Delivery.
+
+create index onq7
+on Corders(cordid);
+
+select fname, lname, phone 
+from Customer
+where uid in(select uid from Corders
+		      where cordid in (
+               select  cordid 
+               from Transactions
+				   where paymentmethod = 'COD'
+				)
+		);
+
+8. List all the Employees whose salary is greater than the average salary of the all the specialities.
+
+create index onq8
+on Employee(speciality);
+
+select * 
+from Employee
+where salary>all(
+   select avg(salary) 
+   from Employee 
+   group by speciality
+   );
+
+
+9.List all the workers who work in the clothes category
+
+create index onq9
+on Employee(eid);
+
+Select *  
+from Employee
+where eid in(Select weid 
+            from Worker 
+            where catid=1
+            );
+
+
+10.List all Delivery persons whose city is same as that of the order delivered by him.
+
+create index onq10
+on DeliveryPerson(cordid);
+
+Select E.eid from Employee as E, DeliveryPerson as D
+where E.eid=D.deid and D.cordid in(select cordid 
+                                 from Corders 
+                                 where uid in(Select uid 
+                                             from Customer 
+                                             where city=E.city
+                                             )
+                                 );
+
